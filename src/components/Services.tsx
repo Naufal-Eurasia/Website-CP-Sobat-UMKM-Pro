@@ -8,7 +8,7 @@ import posterTraining from '../assets/postrain.png';// Ganti dengan nama file ga
 interface ServiceItem {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
-  desc: React.ReactNode;
+  desc?: React.ReactNode; // Menjadi opsional
   shortDesc: string; // Deskripsi singkat untuk tampilan kartu awal
   posterImage?: string;
   link?: string;
@@ -21,22 +21,6 @@ const services: ServiceItem[] = [
     shortDesc: 'Program Inkubasi Bisnis, Business Road Map, Akademi Manajer, hingga penyusunan SOP & KPI.',
     posterImage: posterTraining,
     link: 'https://wa.me/6281358894404',
-    desc: (
-      <div className="space-y-5">
-        <a href="https://wa.me/6281358894404" target="_blank" rel="noopener noreferrer" className="block group/poster relative">
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
-            <img 
-              src={posterTraining} 
-              alt="Poster Training UMKM" 
-              className="w-full h-auto object-contain bg-slate-50"
-            />
-            <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl">Klik untuk Daftar</div>
-            </div>
-          </div>
-        </a>
-      </div>
-    ),
   },
   {
     icon: Users,
@@ -44,22 +28,6 @@ const services: ServiceItem[] = [
     shortDesc: 'Pendampingan bisnis mendalam (360° Review, BOS Check, BSE) secara kelompok maupun eksklusif.',
     posterImage: posterMentoring,
     link: 'https://wa.me/6281358894404',
-    desc: (
-      <div className="space-y-5">
-        <a href="https://wa.me/6281358894404" target="_blank" rel="noopener noreferrer" className="block group/poster relative">
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
-            <img 
-              src={posterMentoring} 
-              alt="Poster Mentoring" 
-              className="w-full h-auto object-contain bg-slate-50"
-            />
-            <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl">Klik untuk Daftar</div>
-            </div>
-          </div>
-        </a>
-      </div>
-    ),
   },
   {
     icon: Brain,
@@ -67,22 +35,6 @@ const services: ServiceItem[] = [
     shortDesc: 'Solusi legalitas, perpajakan, rekrutmen SDM Pro Player, hingga penataan organisasi usaha.',
     posterImage: posterConsulting,
     link: 'https://wa.me/6281358894404',
-    desc: (
-     <div className="space-y-5">
-        <a href="https://wa.me/6281358894404" target="_blank" rel="noopener noreferrer" className="block group/poster relative">
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
-            <img 
-              src={posterConsulting} 
-              alt="Poster Consulting UMKM" 
-              className="w-full h-auto object-contain bg-slate-50"
-            />
-            <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-lg">Klik untuk Daftar</div>
-            </div>
-          </div>
-        </a>
-      </div>
-    ),
   },
   {
     icon: FileBarChart,
@@ -90,22 +42,6 @@ const services: ServiceItem[] = [
     shortDesc: 'Strategi scaling bisnis dari skala lokal ke nasional dengan pendekatan bertahap dan terukur.',
     posterImage: posterBos,
     link: 'https://wa.me/6281358894404',
-    desc: (
-      <div className="space-y-5">
-        <a href="https://wa.me/6281358894404" target="_blank" rel="noopener noreferrer" className="block group/poster relative">
-          <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
-            <img 
-              src={posterBos} 
-              alt="Poster BOS Check" 
-              className="w-full h-auto object-contain bg-slate-50"
-            />
-            <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl">Klik untuk Daftar</div>
-            </div>
-          </div>
-        </a>
-      </div>
-    ),
   },
   {
     icon: BarChart3,
@@ -198,8 +134,8 @@ export default function Services() {
                   </div>
 
                   {s.posterImage && (
-                    <div className="mb-6 rounded-2xl overflow-hidden h-64 border border-slate-100 bg-slate-50 shadow-sm group-hover:border-blue-500 transition-all">
-                      <img src={s.posterImage} alt={s.title} className="w-full h-full object-contain" />
+                    <div className="mb-6 rounded-2xl overflow-hidden aspect-[3/4] border border-slate-100 bg-slate-50 shadow-sm group-hover:border-blue-500 transition-all">
+                      <img src={s.posterImage} alt={s.title} className="w-full h-full object-contain" loading="lazy" />
                     </div>
                   )}
 
@@ -241,15 +177,15 @@ export default function Services() {
       {/* --- KOMPONEN POP-UP MENU (MODAL) --- */}
       {activeService && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity"
           onClick={() => setActiveService(null)} // Klik di luar modal untuk menutup
         >
           <div 
-            className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-8 max-h-[85vh] overflow-y-auto transform scale-100 transition-all"
+            className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col transform scale-100 transition-all"
             onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat konten diklik
           >
             {/* Header Modal */}
-            <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-100">
+            <div className="flex items-start justify-between mb-4 pb-4 border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center">
                   {/* Render icon dinamis */}
@@ -268,12 +204,31 @@ export default function Services() {
             </div>
 
             {/* Konten Utama Deskripsi di dalam Pop-up */}
-            <div className="text-slate-700 leading-relaxed">
-              {activeService.desc}
+            <div className="text-slate-700 leading-relaxed overflow-hidden flex-grow flex flex-col items-center justify-center">
+              {activeService.desc ? (
+                <div className="overflow-y-auto w-full pr-1 max-h-[60vh]">{activeService.desc}</div>
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full">
+                  {activeService.posterImage && (
+                    <div className="relative group/poster w-full max-w-[45vh] aspect-[3/4]">
+                      <a href={activeService.link} target="_blank" rel="noopener noreferrer" className="block relative w-full h-full rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
+                        <img 
+                          src={activeService.posterImage} 
+                          alt={activeService.title} 
+                          className="w-full h-full object-contain bg-slate-50"
+                        />
+                        <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl">Klik untuk Daftar</div>
+                        </div>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Footer Modal */}
-            <div className="mt-8 pt-4 border-t border-slate-100 flex justify-end gap-3">
+            {/* Footer Modal - flex-shrink-0 agar tidak terpotong */}
+            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3 flex-shrink-0">
               <button
                 onClick={() => setActiveService(null)}
                 className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 transition"

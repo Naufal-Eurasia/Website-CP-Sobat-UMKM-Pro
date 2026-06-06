@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Image as ImageIcon, Link as LinkIcon, Calendar as CalendarIcon, Save, Trash2, ChevronLeft, ChevronRight, LogOut, AlertTriangle, X, CheckCircle, Info, Edit2 } from 'lucide-react';
 import { ProgramItem } from '../App';
 
@@ -10,11 +10,12 @@ interface AdminProps {
 
 export default function Admin({ onLogout, events, setEvents }: AdminProps) {
   const [activeTab, setActiveTab] = useState<'form' | 'calendar'>('form');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null); // State untuk ID program yang akan dihapus
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null); // State untuk notifikasi
-  const [editingEventId, setEditingEventId] = useState<number | null>(null); // State untuk ID program yang sedang diedit
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [viewDate, setViewDate] = useState(new Date()); // Mengikuti bulan saat ini secara otomatis
   
-  // State untuk form input
   const [eventData, setEventData] = useState({
     title: '',
     link: '',
@@ -22,7 +23,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     type: 'Workshop',
     poster: null as File | null
   });
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Preview untuk form
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEventData({ ...eventData, [e.target.name]: e.target.value });
@@ -32,7 +33,6 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setEventData({ ...eventData, poster: file });
-      // Buat preview untuk file baru
       if (previewUrl && !events.some(ev => ev.poster === previewUrl)) {
         URL.revokeObjectURL(previewUrl);
       }
@@ -43,14 +43,11 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Ambil poster lama jika sedang edit, atau undefined jika baru
     let posterUrl: string | undefined = editingEventId 
       ? events.find(ev => ev.id === editingEventId)?.poster 
       : undefined;
     
-    // Jika ada file poster baru yang dipilih, buat URL baru
     if (eventData.poster) {
-      // Konversi file ke Base64 agar bisa disimpan permanen di localStorage
       try {
         posterUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -66,7 +63,6 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     }
 
     if (editingEventId !== null) {
-      // Mode Edit: Update data yang sudah ada
       setEvents(events.map(ev => 
         ev.id === editingEventId 
           ? { ...ev, title: eventData.title, date: eventData.date, link: eventData.link || undefined, type: eventData.type, poster: posterUrl }
@@ -75,7 +71,6 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
       setNotification({ message: 'Program berhasil diperbarui!', type: 'success' });
       setEditingEventId(null);
     } else {
-      // Mode Tambah: Buat data baru
       const newEvent = {
         id: Date.now(),
         title: eventData.title,
@@ -90,12 +85,9 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
 
     setEventData({ title: '', link: '', date: '', type: 'Workshop', poster: null });
     setPreviewUrl(null);
-    // Reset input file secara manual agar bisa upload file yang sama
-    const fileInput = document.getElementById('poster-upload') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Fungsi untuk memicu mode edit dan mengisi form
   const startEdit = (ev: ProgramItem) => {
     setEditingEventId(ev.id);
     setEventData({ title: ev.title, link: ev.link || '', date: ev.date, type: ev.type, poster: null });
@@ -103,30 +95,67 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     setActiveTab('form');
   };
 
-  // Fungsi untuk menampilkan modal konfirmasi
   const confirmDelete = (id: number) => {
     setShowDeleteConfirm(id);
   };
 
-  // Fungsi untuk melakukan penghapusan setelah konfirmasi
   const executeDelete = () => {
     if (showDeleteConfirm !== null) {
       setEvents(events.filter((ev) => ev.id !== showDeleteConfirm));
-      setShowDeleteConfirm(null); // Tutup modal setelah dihapus
+      setShowDeleteConfirm(null);
       setNotification({ message: 'Program berhasil dihapus!', type: 'success' });
     }
   };
 
-  // Efek untuk menghilangkan notifikasi secara otomatis
+  // --- Logika Kalender Dinamis ---
+  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const startDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
+  
+  const handlePrevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+
+  const getEventsForDay = (day: number) => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const monthNameInIndonesian = monthNames[month].toLowerCase();
+    
+    return events.filter(ev => {
+      if (!ev.date) return false;
+
+      const dateLower = ev.date.toLowerCase();
+      
+      // 1. Coba cek jika input adalah format standar YYYY-MM-DD
+      const evDate = new Date(ev.date);
+      if (!isNaN(evDate.getTime())) {
+        return evDate.getFullYear() === year && evDate.getMonth() === month && evDate.getDate() === day;
+      }
+
+      // 2. Jika input adalah teks bebas (misal: "3-4 Mei 2026")
+      // Kita cek apakah teks mengandung nama bulan yang sedang dilihat dan tahunnya
+      if (dateLower.includes(monthNameInIndonesian) && dateLower.includes(year.toString())) {
+        // Gunakan Regex untuk mencari angka hari yang berdiri sendiri (bukan bagian dari 13, 23, dll)
+        const dayRegex = new RegExp(`\\b${day}\\b`);
+        return dayRegex.test(dateLower);
+      }
+
+      return false;
+    });
+  };
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => {
         setNotification(null);
-      }, 3000); // Notifikasi akan hilang setelah 3 detik
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
-
 
   return (
     <>
@@ -211,7 +240,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                       </label>
                       <input 
                         name="date" value={eventData.date} onChange={handleInputChange}
-                        type="text" required placeholder="Contoh: 17 – 19 Juli 2026"
+                        type="text" required placeholder="Contoh: 3-4 Mei 2026"
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition"
                       />
                     </div>
@@ -227,6 +256,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                     >
                       <input 
                         type="file" 
+                        ref={fileInputRef}
                         className="hidden" 
                         id="poster-upload" 
                         accept="image/*" 
@@ -272,29 +302,57 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
               /* Tampilan Kalender Sederhana */
               <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold text-slate-900">Mei 2024</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                  </h2>
                   <div className="flex gap-2">
-                    <button className="p-2 hover:bg-slate-100 rounded-xl transition"><ChevronLeft /></button>
-                    <button className="p-2 hover:bg-slate-100 rounded-xl transition"><ChevronRight /></button>
+                    <button onClick={handlePrevMonth} className="p-2 hover:bg-slate-100 rounded-xl transition text-slate-600"><ChevronLeft /></button>
+                    <button onClick={handleNextMonth} className="p-2 hover:bg-slate-100 rounded-xl transition text-slate-600"><ChevronRight /></button>
                   </div>
                 </div>
                 <div className="grid grid-cols-7 gap-2">
                   {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
                     <div key={d} className="text-center text-xs font-bold text-slate-400 py-2">{d}</div>
                   ))}
-                  {Array.from({ length: 31 }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-24 p-2 border border-slate-50 rounded-xl transition hover:bg-blue-50 relative ${i + 1 === 20 ? 'bg-blue-50 border-blue-200' : ''}`}
-                    >
-                      <span className="text-sm font-bold text-slate-400">{i + 1}</span>
-                      {i + 1 === 20 && (
-                        <div className="mt-1 p-1 bg-blue-700 text-[10px] text-white rounded-md truncate font-medium">
-                          Super Team WS
-                        </div>
-                      )}
-                    </div>
+                  
+                  {/* Baris Kosong untuk awal bulan */}
+                  {Array.from({ length: startDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-24 p-2"></div>
                   ))}
+
+                  {/* Tanggal Aktif */}
+                  {Array.from({ length: daysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
+                    const day = i + 1;
+                    const dayEvents = getEventsForDay(day);
+                    
+                    // Sekarang menggunakan waktu asli dari komputer Anda
+                    const now = new Date();
+                    const isToday = 
+                      day === now.getDate() && 
+                      viewDate.getMonth() === now.getMonth() && 
+                      viewDate.getFullYear() === now.getFullYear();
+                    
+                    return (
+                      <div 
+                        key={day} 
+                        className={`h-24 p-2 border border-slate-100 rounded-xl transition hover:bg-blue-50 relative overflow-hidden flex flex-col ${isToday ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100' : ''}`}
+                      >
+                        <span className={`text-sm font-bold ${isToday ? 'text-blue-700' : 'text-slate-400'}`}>{day}</span>
+                        <div className="mt-1 flex-grow overflow-y-auto scrollbar-hide space-y-1">
+                          {dayEvents.map(ev => (
+                            <div 
+                              key={ev.id} 
+                              onClick={() => startEdit(ev)}
+                              className="p-1 bg-blue-700 text-[9px] text-white rounded-md truncate font-medium cursor-pointer hover:bg-blue-800 transition shadow-sm"
+                              title={`${ev.type}: ${ev.title}`}
+                            >
+                              {ev.title}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -332,9 +390,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                     </div>
                     <h4 className="font-bold text-sm mb-1">{ev.title}</h4>
                     <p className="text-xs text-slate-400">
-                      {isNaN(Date.parse(ev.date)) 
-                        ? ev.date 
-                        : new Date(ev.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {ev.date}
                     </p>
                     {ev.poster && (
                       <div className="mt-2 rounded-lg overflow-hidden h-24 border border-white/10 bg-white/5">
@@ -357,80 +413,77 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
       </div>
     </div>
 
-      {/* Custom Delete Confirmation Modal */}
-      {showDeleteConfirm !== null && (
+    {/* Custom Delete Confirmation Modal */}
+    {showDeleteConfirm !== null && (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+        onClick={() => setShowDeleteConfirm(null)}
+      >
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-          onClick={() => setShowDeleteConfirm(null)} // Klik di luar modal untuk menutup
+          className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 transform scale-100 transition-all"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div 
-            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 transform scale-100 transition-all"
-            onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat konten diklik
-          >
-            {/* Header Modal */}
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3 text-red-600">
-                <AlertTriangle className="w-7 h-7" />
-                <h3 className="text-xl font-bold text-slate-900">Konfirmasi Hapus Program</h3>
-              </div>
-              <button 
-                onClick={() => setShowDeleteConfirm(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-              >
-                <X className="w-6 h-6" />
-              </button>
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3 text-red-600">
+              <AlertTriangle className="w-7 h-7" />
+              <h3 className="text-xl font-bold text-slate-900">Konfirmasi Hapus Program</h3>
             </div>
+            <button 
+              onClick={() => setShowDeleteConfirm(null)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-            {/* Konten Modal */}
-            <div className="text-slate-700 leading-relaxed mb-8">
-              <p>Anda yakin ingin menghapus program ini dari daftar?</p>
-              <p className="font-semibold mt-2">Tindakan ini tidak dapat dibatalkan.</p>
-            </div>
+          <div className="text-slate-700 leading-relaxed mb-8">
+            <p>Anda yakin ingin menghapus program ini dari daftar?</p>
+            <p className="font-semibold mt-2">Tindakan ini tidak dapat dibatalkan.</p>
+          </div>
 
-            {/* Footer Modal - Tombol Aksi */}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(null)}
-                className="px-6 py-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition"
-              >
-                Batal
-              </button>
-              <button
-                onClick={executeDelete}
-                className="px-6 py-3 text-sm font-semibold bg-red-600 text-white rounded-xl hover:bg-red-700 transition flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" /> Ya, Hapus Program
-              </button>
-            </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowDeleteConfirm(null)}
+              className="px-6 py-3 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition"
+            >
+              Batal
+            </button>
+            <button
+              onClick={executeDelete}
+              className="px-6 py-3 text-sm font-semibold bg-red-600 text-white rounded-xl hover:bg-red-700 transition flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" /> Ya, Hapus Program
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* Notification Toast - Untuk pesan sukses tambah/hapus */}
-      {notification && (
-        <div className={`fixed top-8 right-8 z-[100] flex items-center gap-4 p-5 bg-white rounded-[2rem] shadow-2xl border transition-all animate-fade-in ${
-          notification.type === 'success' ? 'border-green-100' : 'border-blue-100'
+    {/* Notification Toast */}
+    {notification && (
+      <div className={`fixed top-8 right-8 z-[100] flex items-center gap-4 p-5 bg-white rounded-[2rem] shadow-2xl border transition-all animate-fade-in ${
+        notification.type === 'success' ? 'border-green-100' : 'border-blue-100'
+      }`}>
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+          notification.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
         }`}>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-            notification.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
-          }`}>
-            {notification.type === 'success' ? (
-              <CheckCircle className="w-6 h-6" />
-            ) : (
-              <Info className="w-6 h-6" />
-            )}
-          </div>
-          <div className="pr-8">
-            <p className="text-slate-900 font-bold">{notification.message}</p>
-          </div>
-          <button 
-            onClick={() => setNotification(null)}
-            className="absolute top-4 right-4 p-1 hover:bg-slate-50 rounded-lg text-slate-400 transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {notification.type === 'success' ? (
+            <CheckCircle className="w-6 h-6" />
+          ) : (
+            <Info className="w-6 h-6" />
+          )}
         </div>
-      )}
+        <div className="pr-8">
+          <p className="text-slate-900 font-bold">{notification.message}</p>
+        </div>
+        <button 
+          onClick={() => setNotification(null)}
+          className="absolute top-4 right-4 p-1 hover:bg-slate-50 rounded-lg text-slate-400 transition"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    )}
     </>
   );
 }

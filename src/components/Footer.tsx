@@ -9,7 +9,6 @@ const footerLinks = [
   { href: '#team', label: 'Tim Kami' },
   { href: '#testimonials', label: 'Testimoni' },
   { href: '#faq', label: 'FAQ' },
-  { href: '#admin', label: 'Login Admin' },
 ];
 
 export default function Footer() {

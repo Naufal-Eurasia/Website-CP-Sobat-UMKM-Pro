@@ -10,7 +10,6 @@ const navLinks = [
   { href: '#team', label: 'Tim Kami' },
   { href: '#testimonials', label: 'Testimoni' },
   { href: '#faq', label: 'FAQ' },
-  { href: '#admin', label: 'Login' },
 ];
 
 export default function Navbar() {

@@ -21,7 +21,7 @@ export default function About() {
               dan hasil nyata.
             </p>
             <div className="mt-12">
-              <h4 className="text-3xl font-black text-black-600 mb-4 uppercase tracking-tighter">NILAI-NILAI PERUSAHAAN</h4>
+              <h4 className="text-3xl font-black text-slate-900 mb-4 uppercase tracking-tighter">NILAI-NILAI PERUSAHAAN</h4>
               <h3 className="text-3xl font-black text-red-600 mb-4 uppercase tracking-tighter">PRO-1</h3>
               <p className="text-slate-700 font-semibold mb-4 leading-relaxed">
                 Sobat UMKM Pro dibangun dengan semangat kolaborasi dan semangat gotong royong, melalui 4 pilar utama:
