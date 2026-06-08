@@ -7,6 +7,7 @@ const footerLinks = [
   { href: '#services', label: 'Layanan' },
   { href: '#programs', label: 'Program' },
   { href: '#team', label: 'Tim Kami' },
+  { href: '#kulwa', label: 'Kulwa' },
   { href: '#testimonials', label: 'Testimoni' },
   { href: '#faq', label: 'FAQ' },
 ];

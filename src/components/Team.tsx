@@ -13,6 +13,9 @@ interface Member {
   role: string;
   desc: string;
   img: string;
+  mainRole?: string;
+  shortDesc?: string;
+  experience?: string[];
   socials?: {
     instagram?: string;
     facebook?: string;
@@ -28,39 +31,95 @@ interface Member {
 const members: Member[] = [
   {
     name: 'Arfin Mardiyanto, S.Sos',
-    role: 'Founder & Mentor UMKM',
-    desc: 'Ahli strategi bisnis dengan pengalaman 10 tahun membantu transformasi digital UMKM.',
+    role: 'Founder & Mentor UMKM Pro',
+    mainRole: 'Menjadi pengarah strategi, mentor bisnis, dan penggerak ekosistem Sobat UMKM Pro dalam membantu UMKM bertumbuh, bertransformasi digital, dan naik kelas.',
+    shortDesc: 'Berpengalaman mendampingi ratusan UMKM dalam pengembangan bisnis, peningkatan omzet, penguatan SDM, dan transformasi usaha melalui mentoring, pelatihan, dan konsultasi.',
+    experience: [
+      'Pendamping UMKM BNSP RI',
+      'Trainer UMKM BNSP RI',
+      'Operator K3 BNSP RI',
+      'Certified Mentor BRM',
+      'Professional Mentor Business Coach',
+      'Professional Trainer Corporate Coach'
+    ],
+    desc: 'Jika rencana Anda adalah untuk satu tahun, tanamlah padi. Jika rencana Anda adalah untuk sepuluh tahun, tanamlah pohon. Jika rencana Anda adalah untuk seumur hidup, tanamlah manusia.',
     img: ar1Image,
     socials: { instagram: 'https://instagram.com/arfinmardiyanto', facebook: 'https://facebook.com/arfinmardiyanto', threads: 'https://www.threads.net/@arfinmardiyanto', linkedin: 'https://www.linkedin.com/in/arfin-mardiyanto-13a713134/', tikTok: 'https://www.tiktok.com/@arfinmardiyanto', youtube: 'https://www.youtube.com/@arfinmardiyanto',whatsapp: 'https://wa.me/6281358894404' },
   },
   {
     name: 'Tri Agustina, S.H',
-    role: 'Digital Marketing Specialist',
-    desc: 'Ahli strategi bisnis dengan pengalaman 10 tahun membantu transformasi digital UMKM.',
-    img: ar6Image
+    role: 'Branding & Digital Marketing Spesialist',
+    mainRole: 'Membantu UMKM membangun citra usaha yang kuat dan menjangkau lebih banyak pelanggan melalui strategi pemasaran digital yang efektif.',
+    shortDesc: 'Fokus pada pengembangan branding, media sosial, promosi digital, dan strategi komunikasi yang mampu meningkatkan kepercayaan pasar terhadap produk maupun jasa UMKM.',
+    experience: [
+      'Social Media Management',
+      'Content Marketing',
+      'Branding Strategy',
+      'Digital Campaign',
+      'Copywriting'
+    ],
+    desc: 'Brand yang kuat membuat UMKM lebih mudah dikenal, dipercaya, dipilih, dipesan, dan dibagikan oleh pelanggan.',
+    img: ar6Image,
   },
   {
     name: 'Naufal Eurasia N',
-    role: 'IT Development',
-    desc: 'Spesialis HR yang fokus pada pengembangan SDM untuk mendukung pertumbuhan bisnis UMKM secara berkelanjutan, digitalisasi juga naik level.',
+    role: 'Pengembangan Sistem & Teknologi',
+    mainRole: 'Mengembangkan dan memastikan sistem digital Sobat UMKM Pro berjalan dengan baik untuk mendukung pelayanan yang cepat, modern, dan mudah digunakan.',
+    shortDesc: 'Berpengalaman dalam pengembangan website, sistem informasi, dan implementasi teknologi yang membantu UMKM bekerja lebih efektif dan efisien.',
+    experience: [
+      'Website Development',
+      'Sistem Informasi',
+      'Database Management',
+      'Digitalisasi Proses Bisnis',
+      'Integrasi Teknologi'
+    ],
+    desc: 'Teknologi bukan sekadar alat, melainkan akselerator yang mengubah potensi menjadi performa nyata bagi setiap UMKM.',
     img: ar2Image,
   },
   {
     name: 'Habibah Rahma H',
-    role: 'IT Operational',
-    desc: 'Mengembangkan sistem IT yang handal namun tetap mudah dioperasikan oleh pemula sekalipun.',
+    role: 'Operasional & Layanan Digital',
+    mainRole: 'Memastikan seluruh layanan dan sistem operasional berjalan dengan baik sehingga pengguna mendapatkan pengalaman yang nyaman dan mudah.',
+    shortDesc: 'Fokus pada pengelolaan operasional platform, peningkatan kualitas layanan, dan pengembangan fitur berdasarkan kebutuhan UMKM.',
+    experience: [
+      'Operasional Digital',
+      'Administrasi Sistem',
+      'Quality Control',
+      'Customer Experience',
+      'Monitoring Layanan'
+    ],
+    desc: ' Sistem yang baik adalah yang bisa membantu operasional semua bidang dengan efisien dan terstruktur',
     img: hrImage,
   },
   {
     name: 'Radita Nurdianti, S.Psi',
-    role: 'HR - Generalist',
-    desc: 'Tata kelola administrasi karyawan, rekrutmen, hubungan kerja, dan pengembangan budaya perusahaan.',
+    role: 'SDM & Administrasi Talenta',
+    mainRole: 'Mendukung pengelolaan sumber daya manusia secara menyeluruh mulai dari administrasi SDM, pengembangan karyawan, hubungan kerja, hingga implementasi kebijakan perusahaan yang mendukung pertumbuhan organisasi.',
+    shortDesc: 'Praktisi Human Resource yang memiliki pemahaman dalam pengelolaan SDM, administrasi kepegawaian, pengembangan kompetensi, serta penciptaan lingkungan kerja yang produktif dan kolaboratif.',
+    experience: [
+      'Human Resource Administration',
+      'Employee Relations',
+      'Performance Management Support',
+      'Recruitment Support',
+      'Human Capital Development',
+      'Organizational Culture Implementation'
+    ],
+    desc: 'Human resource bukan sekadar tentang mengelola data, tapi tentang menghargai potensi dan membangun budaya di mana setiap individu bisa bertumbuh bersama organisasi.',
     img: dtImage,
   },
   {
     name: 'Nur Hidayati, S.Si',
-    role: 'HR - Talent Acquisition',
-    desc: 'Membuat strategi rekrutmen yang efektif dan membangun talent pool kandidat potensial.',
+    role: 'Pengembangan SDM & Talenta',
+    mainRole: 'Membangun tim yang kompeten, produktif, dan memiliki semangat belajar untuk mendukung pertumbuhan Sobat UMKM Pro.',
+    shortDesc: 'Berpengalaman dalam rekrutmen, pengembangan kompetensi, pelatihan, dan pembentukan budaya kerja yang positif dan berorientasi pada hasil.',
+    experience: [
+      'Rekrutmen SDM',
+      'Pengembangan Talenta',
+      'Training & Development',
+      'Penilaian Kinerja',
+      'Pengembangan Organisasi'
+    ],
+    desc: 'Keberuntungan bukanlah sekadar kebetulan, melainkan sebuah keterampilan untuk mempersiapkan talenta terbaik dan membangun ekosistem yang tepat, sehingga setiap peluang pertumbuhan dapat disambut dengan kesiapan yang matang.',
     img: ar5Image,
   },
 ];
@@ -200,6 +259,34 @@ export default function Team() {
                     {selectedMember.name}
                   </h3>
                   <div className="w-16 h-1 bg-amber-400 mb-8 mx-auto md:mx-0 rounded-full" />
+
+                  {selectedMember.mainRole && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-bold text-blue-700 uppercase mb-2">Peran Utama</h4>
+                      <p className="text-slate-700 leading-relaxed text-sm md:text-base">{selectedMember.mainRole}</p>
+                    </div>
+                  )}
+
+                  {selectedMember.shortDesc && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-bold text-blue-700 uppercase mb-2">Deskripsi Singkat</h4>
+                      <p className="text-slate-700 leading-relaxed text-sm md:text-base">{selectedMember.shortDesc}</p>
+                    </div>
+                  )}
+
+                  {selectedMember.experience && (
+                    <div className="mb-8">
+                      <h4 className="text-sm font-bold text-blue-700 uppercase mb-3">Pengalaman & Sertifikasi</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4">
+                        {selectedMember.experience.map((exp, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-slate-600 text-xs md:text-sm">
+                            <span className="text-amber-500 font-bold">✓</span> <span>{exp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-slate-600 text-lg lg:text-xl leading-relaxed mb-10 italic">
                     &ldquo;{selectedMember.desc}&rdquo;
                   </p>

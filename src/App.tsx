@@ -11,6 +11,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Admin from './components/Admin';
 import Login from './components/Login';
+import Articles, { KulwaItem } from './components/Articles';
 
 // Interface untuk menyamakan struktur data
 export interface ProgramItem {
@@ -66,7 +67,6 @@ function App() {
   const [currentPath, setCurrentPath] = useState(window.location.hash);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 1,
@@ -90,6 +90,12 @@ function App() {
       type: 'Strategy',
     },
   ]);
+
+  // State untuk data KULWA
+  const [articles, setArticles] = useState<KulwaItem[]>(() => {
+    const saved = localStorage.getItem('sobat_umkm_kulwa');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     const handleHashChange = () => setCurrentPath(window.location.hash);
@@ -115,6 +121,11 @@ function App() {
     }
   }, [programs, isDataLoaded]);
 
+  // Simpan KULWA ke LocalStorage setiap ada perubahan
+  useEffect(() => {
+    localStorage.setItem('sobat_umkm_kulwa', JSON.stringify(articles));
+  }, [articles]);
+
   const handleLogout = () => {
     setIsLoggedIn(false);
     window.location.hash = '#home';
@@ -124,7 +135,15 @@ function App() {
     if (!isLoggedIn) {
       return <Login onLogin={setIsLoggedIn} onBack={() => window.location.hash = '#home'} />;
     }
-    return <Admin onLogout={handleLogout} events={programs} setEvents={setPrograms} />;
+    return (
+      <Admin 
+        onLogout={handleLogout} 
+        events={programs} 
+        setEvents={setPrograms} 
+        articles={articles} 
+        setArticles={setArticles} 
+      />
+    );
   }
 
   return (
@@ -132,6 +151,7 @@ function App() {
       <Navbar />
       <Hero />
       <About />
+      <Articles articles={articles} />
       <Programs programs={programs} />
       <Services />
       <Team />

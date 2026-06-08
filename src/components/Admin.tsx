@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PlusCircle, Image as ImageIcon, Link as LinkIcon, Calendar as CalendarIcon, Save, Trash2, ChevronLeft, ChevronRight, LogOut, AlertTriangle, X, CheckCircle, Info, Edit2 } from 'lucide-react';
+import { PlusCircle, Image as ImageIcon, Link as LinkIcon, Calendar as CalendarIcon, Save, Trash2, ChevronLeft, ChevronRight, LogOut, AlertTriangle, X, CheckCircle, Info, Edit2, BookOpen, Type } from 'lucide-react';
 import { ProgramItem } from '../App';
+import { KulwaItem } from './Articles';
 
 interface AdminProps {
   onLogout: () => void;
   events: ProgramItem[];
   setEvents: React.Dispatch<React.SetStateAction<ProgramItem[]>>;
+  articles: KulwaItem[];
+  setArticles: React.Dispatch<React.SetStateAction<KulwaItem[]>>;
 }
 
-export default function Admin({ onLogout, events, setEvents }: AdminProps) {
-  const [activeTab, setActiveTab] = useState<'form' | 'calendar'>('form');
+export default function Admin({ onLogout, events, setEvents, articles, setArticles }: AdminProps) {
+  const [activeTab, setActiveTab] = useState<'form' | 'calendar' | 'kulwa'>('form');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [deleteType, setDeleteType] = useState<'event' | 'kulwa'>('event');
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [editingArticleId, setEditingArticleId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewDate, setViewDate] = useState(new Date()); // Mengikuti bulan saat ini secara otomatis
   
@@ -25,8 +30,56 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // State untuk form Kulwa
+  const [kulwaData, setKulwaData] = useState({
+    title: '',
+    date: '',
+    content: '',
+    poster: null as File | null
+  });
+  const [kulwaPreviewUrl, setKulwaPreviewUrl] = useState<string | null>(null);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEventData({ ...eventData, [e.target.name]: e.target.value });
+  };
+
+  // Fungsi Kompresi Gambar: Mengizinkan input gambar besar, tapi menyimpannya dalam ukuran kecil (web-friendly)
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200; // Resolusi maksimal agar tetap tajam tapi ringan
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          // Hasil akhir dikompresi ke format JPEG dengan kualitas 0.7 (70%)
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,14 +102,9 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     
     if (eventData.poster) {
       try {
-        posterUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(eventData.poster as File);
-        });
+        posterUrl = await compressImage(eventData.poster as File);
       } catch (error) {
-        console.error("Gagal memproses gambar:", error);
+        console.error("Gagal memproses gambar event:", error);
         setNotification({ message: 'Gagal memproses gambar poster.', type: 'error' });
         return;
       }
@@ -88,6 +136,73 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleKulwaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (!kulwaData.title || !kulwaData.content) {
+        setNotification({ message: 'Judul dan isi materi wajib diisi!', type: 'error' });
+        return;
+      }
+
+      const safeArticles = articles || [];
+      
+      if (!setArticles || typeof setArticles !== 'function') {
+        console.error("Missing setArticles prop in Admin component");
+        setNotification({ message: 'Gagal menyimpan: Sistem sinkronisasi data tidak terdeteksi.', type: 'error' });
+        return;
+      }
+
+      let posterUrl: string | undefined = editingArticleId 
+        ? safeArticles.find(a => a.id === editingArticleId)?.poster 
+        : undefined;
+      
+      if (kulwaData.poster) {
+        posterUrl = await compressImage(kulwaData.poster as File);
+      }
+
+      if (editingArticleId !== null) {
+        const updated = safeArticles.map(a => 
+          a.id === editingArticleId 
+            ? { ...a, title: kulwaData.title, date: kulwaData.date, content: kulwaData.content, poster: posterUrl }
+            : a
+        );
+        setArticles(updated);
+        setNotification({ message: 'Artikel KULWA diperbarui!', type: 'success' });
+        setEditingArticleId(null);
+      } else {
+        const newArticle = {
+          id: Date.now(),
+          title: kulwaData.title,
+          date: kulwaData.date,
+          content: kulwaData.content,
+          poster: posterUrl
+        };
+        setArticles([...safeArticles, newArticle]);
+        setNotification({ message: 'Artikel KULWA ditambahkan!', type: 'success' });
+      }
+
+      // Reset Form
+      setKulwaData({ title: '', date: '', content: '', poster: null });
+      setKulwaPreviewUrl(null);
+      
+      // Bersihkan input file secara manual
+      const fileInput = document.getElementById('kulwa-poster') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
+    } catch (err) {
+      console.error("Detail Error:", err);
+      let errorMessage = 'Gagal memproses artikel.';
+      
+      if (err instanceof Error && err.message.includes('quota')) {
+        errorMessage = 'Penyimpanan penuh! Coba gunakan gambar yang lebih kecil.';
+      } else if (err instanceof Error) {
+        errorMessage = `Error: ${err.message}`;
+      }
+
+      setNotification({ message: errorMessage, type: 'error' });
+    }
+  };
+
   const startEdit = (ev: ProgramItem) => {
     setEditingEventId(ev.id);
     setEventData({ title: ev.title, link: ev.link || '', date: ev.date, type: ev.type, poster: null });
@@ -95,15 +210,32 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
     setActiveTab('form');
   };
 
-  const confirmDelete = (id: number) => {
+  const startEditKulwa = (article: KulwaItem) => {
+    setEditingArticleId(article.id);
+    setKulwaData({ title: article.title, date: article.date, content: article.content, poster: null });
+    setKulwaPreviewUrl(article.poster || null);
+    setActiveTab('kulwa');
+  };
+
+  const confirmDelete = (id: number, type: 'event' | 'kulwa') => {
+    setDeleteType(type);
     setShowDeleteConfirm(id);
   };
 
   const executeDelete = () => {
     if (showDeleteConfirm !== null) {
-      setEvents(events.filter((ev) => ev.id !== showDeleteConfirm));
+      if (deleteType === 'event') {
+        setEvents(events.filter((ev) => ev.id !== showDeleteConfirm));
+        setNotification({ message: 'Program berhasil dihapus!', type: 'success' });
+      } else if (deleteType === 'kulwa') {
+        if (setArticles) {
+          setArticles((articles || []).filter((a) => a.id !== showDeleteConfirm));
+          setNotification({ message: 'Artikel KULWA berhasil dihapus!', type: 'success' });
+        } else {
+          setNotification({ message: 'Gagal menghapus: Sistem sinkronisasi data tidak terdeteksi.', type: 'error' });
+        }
+      }
       setShowDeleteConfirm(null);
-      setNotification({ message: 'Program berhasil dihapus!', type: 'success' });
     }
   };
 
@@ -186,13 +318,19 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
             >
               Kalender
             </button>
+            <button 
+              onClick={() => setActiveTab('kulwa')}
+              className={`px-6 py-2.5 rounded-xl font-bold transition ${activeTab === 'kulwa' ? 'bg-blue-700 text-white shadow-lg' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              Kulwa
+            </button>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Kolom Kiri: Form atau Kalender */}
           <div className="lg:col-span-2">
-            {activeTab === 'form' ? (
+            {activeTab === 'form' && (
               <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100">
                 <div className="flex items-center gap-3 mb-8 text-blue-700">
                   {editingEventId ? <Edit2 className="w-8 h-8" /> : <PlusCircle className="w-8 h-8" />}
@@ -298,7 +436,94 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                   </div>
                 </form>
               </div>
-            ) : (
+            )}
+
+            {activeTab === 'kulwa' && (
+              <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-slate-100">
+                <div className="flex items-center gap-3 mb-8 text-blue-700">
+                  <BookOpen className="w-8 h-8" />
+                  <h2 className="text-2xl font-bold">{editingArticleId ? 'Edit Artikel KULWA' : 'Tulis Artikel KULWA'}</h2>
+                </div>
+                
+                <form onSubmit={handleKulwaSubmit} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Judul KULWA</label>
+                      <input 
+                        value={kulwaData.title} onChange={(e) => setKulwaData({...kulwaData, title: e.target.value})}
+                        type="text" placeholder="Contoh: KULWA SUPER TEAM #16" required
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Tanggal Posting</label>
+                      <input 
+                        value={kulwaData.date} onChange={(e) => setKulwaData({...kulwaData, date: e.target.value})}
+                        type="text" required placeholder="Contoh: 15 Mei 2026"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <Type className="w-4 h-4" /> Isi Materi Kulwa
+                    </label>
+                    <textarea 
+                      value={kulwaData.content} onChange={(e) => setKulwaData({...kulwaData, content: e.target.value})}
+                      rows={12} required placeholder="Masukkan seluruh teks materi KULWA di sini..."
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" /> Poster Materi
+                    </label>
+                    <label 
+                      className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50 flex flex-col items-center justify-center ${kulwaPreviewUrl ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 hover:border-blue-400'}`}
+                    >
+                      <input 
+                        type="file" className="hidden" accept="image/*" 
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            setKulwaData({...kulwaData, poster: e.target.files[0]});
+                            setKulwaPreviewUrl(URL.createObjectURL(e.target.files[0]));
+                          }
+                        }}
+                      />
+                      {kulwaPreviewUrl ? (
+                        <img src={kulwaPreviewUrl} alt="Preview" className="h-40 rounded-lg shadow-md mb-2" />
+                      ) : (
+                        <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
+                      )}
+                      <p className="text-xs text-slate-500">Klik untuk upload poster KULWA</p>
+                    </label>
+                  </div>
+
+                  <div className="flex gap-4">
+                    {editingArticleId && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setEditingArticleId(null);
+                          setKulwaData({ title: '', date: '', content: '', poster: null });
+                          setKulwaPreviewUrl(null);
+                        }}
+                        className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition"
+                      >
+                        Batal
+                      </button>
+                    )}
+                    <button type="submit" className="flex-[2] py-4 bg-blue-700 text-white font-bold rounded-2xl shadow-lg hover:bg-blue-800 transition flex items-center justify-center gap-2">
+                      <Save className="w-5 h-5" /> {editingArticleId ? 'Perbarui KULWA' : 'Posting KULWA'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {activeTab === 'calendar' && (
               /* Tampilan Kalender Sederhana */
               <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-100">
                 <div className="flex items-center justify-between mb-8">
@@ -360,6 +585,28 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
 
           {/* Kolom Kanan: List Data yang Sudah Ada */}
           <div className="space-y-6">
+            {activeTab === 'kulwa' ? (
+              <div className="bg-blue-900 rounded-[2.5rem] p-8 text-white shadow-xl">
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-amber-400">
+                  <BookOpen className="w-5 h-5" /> Materi Terbit
+                </h3>
+                <div className="space-y-4">
+                  {articles?.map(a => (
+                    <div key={a.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl group relative hover:bg-white/10 transition">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-bold text-blue-300 uppercase tracking-widest">{a.date}</span>
+                        <div className="flex gap-1">
+                          <button onClick={() => startEditKulwa(a)} className="text-slate-400 hover:text-white p-1"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => confirmDelete(a.id, 'kulwa')} className="text-slate-400 hover:text-red-400 p-1"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-sm leading-tight">{a.title}</h4>
+                      <p className="text-[10px] text-slate-400 mt-2 line-clamp-2">{a.content}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
             <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-amber-400">
                 <CalendarIcon className="w-5 h-5" /> Acara Terdaftar
@@ -380,7 +627,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => confirmDelete(ev.id)}
+                          onClick={() => confirmDelete(ev.id, 'event')}
                           className="text-slate-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-white/10"
                           title="Hapus Program"
                         >
@@ -401,6 +648,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
                 ))}
               </div>
             </div>
+            )}
             
             <div className="bg-blue-50 rounded-[2.5rem] p-8 border border-blue-100">
               <h3 className="font-bold text-blue-800 mb-2">Tips Admin</h3>
@@ -426,7 +674,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3 text-red-600">
               <AlertTriangle className="w-7 h-7" />
-              <h3 className="text-xl font-bold text-slate-900">Konfirmasi Hapus Program</h3>
+              <h3 className="text-xl font-bold text-slate-900">Konfirmasi Hapus {deleteType === 'event' ? 'Program' : 'Kulwa'}</h3>
             </div>
             <button 
               onClick={() => setShowDeleteConfirm(null)}
@@ -437,7 +685,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
           </div>
 
           <div className="text-slate-700 leading-relaxed mb-8">
-            <p>Anda yakin ingin menghapus program ini dari daftar?</p>
+            <p>Anda yakin ingin menghapus {deleteType === 'event' ? 'program' : 'artikel KULWA'} ini dari daftar?</p>
             <p className="font-semibold mt-2">Tindakan ini tidak dapat dibatalkan.</p>
           </div>
 
@@ -452,7 +700,7 @@ export default function Admin({ onLogout, events, setEvents }: AdminProps) {
               onClick={executeDelete}
               className="px-6 py-3 text-sm font-semibold bg-red-600 text-white rounded-xl hover:bg-red-700 transition flex items-center gap-2"
             >
-              <Trash2 className="w-4 h-4" /> Ya, Hapus Program
+              <Trash2 className="w-4 h-4" /> Ya, Hapus {deleteType === 'event' ? 'Program' : 'Kulwa'}
             </button>
           </div>
         </div>
