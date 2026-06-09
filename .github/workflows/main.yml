@@ -30,5 +30,11 @@ jobs:
           server: 145.79.14.31
           username: u212616308
           password: ${{ secrets.HOSTINGER_PASS }}
+          port: 21
+          protocol: ftp
           local-dir: dist/
           server-dir: public_html/
+          timeout: 120000
+          log-level: verbose
+          passive: true
+          dangerous-clean-slate: false
