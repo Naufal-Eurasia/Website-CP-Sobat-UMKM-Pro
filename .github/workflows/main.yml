@@ -19,11 +19,13 @@ jobs:
       - run: npm install
       - run: npm run build
 
-      - name: Deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USER }}
-          password: ${{ secrets.HOSTINGER_PASS }}
-          local-dir: dist/
-          server-dir: public_html/
+    - name: Deploy to Hostinger
+  uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+  with:
+    server: 145.79.14.31
+    username: u212616308
+    password: ${{ secrets.HOSTINGER_PASS }}
+    server-dir: public_html/
+    local-dir: dist/
+    timeout: 60000
+    log-level: verbose
