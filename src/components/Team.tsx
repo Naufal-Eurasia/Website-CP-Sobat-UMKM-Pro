@@ -157,14 +157,14 @@ export default function Team() {
         </div>
 
         <div className="mb-20">
-          <div className="relative group overflow-hidden rounded-3xl shadow-xl h-[320px] sm:h-[450px] md:h-[500px]">
+          <div className="relative group overflow-hidden rounded-3xl shadow-xl h-[420px] sm:h-[450px] md:h-[500px]">
             <img
               src={teamTogether}
               alt="Tim Bersama"
               className="w-full h-full object-cover object-center transition duration-700 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/60 to-transparent flex items-end p-5 md:p-12">
-              <p className="text-white text-xs sm:text-base md:text-2xl italic max-w-2xl md:max-w-3xl leading-tight md:leading-relaxed">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/90 to-transparent flex items-end p-6 md:p-12">
+              <p className="text-white text-sm md:text-2xl italic max-w-2xl md:max-w-3xl leading-relaxed">
                 &ldquo;Kami percaya bahwa teknologi harus bisa dinikmati oleh siapa
                 saja, termasuk pelaku UMKM. Dengan semangat kolaborasi, kami hadir
                 untuk mendampingi langkah sukses Anda.&rdquo;
