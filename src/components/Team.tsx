@@ -157,14 +157,14 @@ export default function Team() {
         </div>
 
         <div className="mb-20">
-          <div className="relative group overflow-hidden rounded-3xl shadow-xl h-[500px]">
+          <div className="relative group overflow-hidden rounded-3xl shadow-xl h-[350px] md:h-[500px]">
             <img
               src={teamTogether}
               alt="Tim Bersama"
               className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/20 to-transparent flex items-end p-12">
-              <p className="text-white text-2xl italic max-w-3xl leading-relaxed">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/40 to-transparent flex items-end p-5 md:p-12">
+              <p className="text-white text-base md:text-2xl italic max-w-3xl leading-relaxed">
                 &ldquo;Kami percaya bahwa teknologi harus bisa dinikmati oleh siapa
                 saja, termasuk pelaku UMKM. Dengan semangat kolaborasi, kami hadir
                 untuk mendampingi langkah sukses Anda.&rdquo;
@@ -242,7 +242,7 @@ export default function Team() {
             </button>
 
             {/* Sisi Kiri: Detail (2/3) */}
-            <div className="lg:w-2/3 p-8 lg:p-20 overflow-y-auto">
+            <div className="lg:w-2/3 p-6 md:p-12 lg:p-20 overflow-y-auto">
               <div className="flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
                 <div className="w-48 h-48 lg:w-64 lg:h-64 rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 border-8 border-slate-50">
                   <img

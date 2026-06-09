@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GraduationCap, Users, Brain, FileBarChart, BarChart3, Building2, X } from 'lucide-react';
-import posterBos from '../assets/BCpos.jpeg'; 
+import { GraduationCap, FileBarChart,Users, Brain,BarChart3, Building2, X } from 'lucide-react'; 
 import posterMentoring from '../assets/Poster Mentoring.png';
 import posterConsulting from '../assets/Poster Consulting UMKM.png';
-import posterTraining from '../assets/postrain.png';// Ganti dengan nama file gambar Anda
+import posterTraining from '../assets/postrain.png';
+import posterBos from '../assets/BCpos.jpeg'; // Pastikan nama file sesuai (misal .png atau .jpg)
 // Interface untuk tipe data layanan
 interface ServiceItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -41,7 +41,7 @@ const services: ServiceItem[] = [
     title: 'BOS Check - Business Operating System Check',
     shortDesc: 'Strategi scaling bisnis dari skala lokal ke nasional dengan pendekatan bertahap dan terukur.',
     posterImage: posterBos,
-    link: 'https://wa.me/6281358894404',
+    link: 'https://docs.google.com/forms/d/e/1FAIpQLSdrCFwj1XAc2Q1JIx8Wce3r5hyAxXZc-ism6sflDq0c8qKgNg/viewform?usp=header',
   },
   {
     icon: BarChart3,
@@ -75,7 +75,6 @@ const services: ServiceItem[] = [
         </p>
         <div className="space-y-3">
           {[
-            { title: 'Workshop Super Team CRA University', link: 'https://crauniversity.id/aff/188/1698/' },
             { title: 'MFM BRM 2.0', link: 'https://crauniversity.id/aff/188/1693/' },
             { title: 'Smart Family RoadMap', link: 'https://crauniversity.id/aff/188/1687/' },
           ].map((item) => (
@@ -210,18 +209,24 @@ export default function Services() {
               ) : (
                 <div className="flex flex-col items-center justify-center w-full h-full">
                   {activeService.posterImage && (
-                    <div className="relative group/poster w-full max-w-[45vh] aspect-[3/4]">
-                      <a href={activeService.link} target="_blank" rel="noopener noreferrer" className="block relative w-full h-full rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 group-hover/poster:scale-[1.01]">
-                        <img 
-                          src={activeService.posterImage} 
-                          alt={activeService.title} 
-                          className="w-full h-full object-contain bg-slate-50"
-                        />
-                        <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
-                          <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl">Klik untuk Daftar</div>
-                        </div>
-                      </a>
-                    </div>
+                    <button 
+                      onClick={() => {
+                        if (activeService.link) {
+                          window.open(activeService.link, '_blank', 'noopener,noreferrer');
+                          setActiveService(null);
+                        }
+                      }}
+                      className="relative group/poster w-full max-w-[45vh] aspect-[3/4] block rounded-2xl overflow-hidden shadow-lg border border-slate-100 transition-transform duration-300 hover:scale-[1.01] cursor-pointer"
+                    >
+                      <img 
+                        src={activeService.posterImage} 
+                        alt={activeService.title} 
+                        className="w-full h-full object-contain bg-slate-50"
+                      />
+                      <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover/poster:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="bg-white text-blue-700 px-6 py-2 rounded-xl font-bold shadow-xl text-sm md:text-base">Klik untuk Daftar</div>
+                      </div>
+                    </button>
                   )}
                 </div>
               )}
@@ -236,16 +241,25 @@ export default function Services() {
                 Tutup
               </button>
               <a
-                href="#contact"
-                onClick={() => {
-                  setActiveService(null);
-                  setTimeout(() => {
-                    document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
+                href={activeService.link || "#contact"}
+                target={activeService.link ? "_blank" : "_self"}
+                rel={activeService.link ? "noopener noreferrer" : ""}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (activeService.link) {
+                    // Gunakan window.open untuk memastikan link eksternal (s.id/WhatsApp) terbuka
+                    window.open(activeService.link, '_blank', 'noopener,noreferrer');
+                  } else {
+                    // Scroll internal ke bagian kontak
+                    setTimeout(() => {
+                      document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }
+                  setActiveService(null); // Tutup modal setelah perintah kirim
                 }}
                 className="px-5 py-2.5 text-sm font-semibold bg-blue-700 text-white rounded-xl hover:bg-blue-800 transition"
               >
-                Tanya Tentang Layanan Ini
+                {activeService.link ? 'Daftar / Konsultasi Sekarang' : 'Tanya Tentang Layanan Ini'}
               </a>
             </div>
           </div>
