@@ -6,6 +6,7 @@ import Services from './components/Services';
 import Programs from './components/Programs';
 import Team from './components/Team';
 import Testimonials from './components/Testimonials';
+import Clients from './components/Clients';
 import FAQ from './components/FAQ';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -17,10 +18,11 @@ import Articles, { KulwaItem } from './components/Articles';
 export interface ProgramItem {
   id: number;
   title: string;
-  date: string;
-  link?: string;
-  poster?: string;
   type: string;
+  date: string;
+  poster?: string;
+  link?: string;
+  isPortrait?: boolean; // true untuk portrait (3:4), false untuk landscape (16:9)
 }
 
 // Helper sederhana untuk mengelola IndexedDB secara Asynchronous
@@ -92,10 +94,7 @@ function App() {
   ]);
 
   // State untuk data KULWA
-  const [articles, setArticles] = useState<KulwaItem[]>(() => {
-    const saved = localStorage.getItem('sobat_umkm_kulwa');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [articles, setArticles] = useState<KulwaItem[]>([]);
 
   useEffect(() => {
     const handleHashChange = () => setCurrentPath(window.location.hash);
@@ -104,18 +103,59 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Muat data dari IndexedDB saat aplikasi pertama kali dibuka
     const init = async () => {
-      const saved = await loadFromDB();
-      if (saved) setPrograms(saved);
-      setIsDataLoaded(true);
+      // 1. Attempt to load from local storage/IndexedDB first for a quicker initial render or offline support
+      try {
+        const storedPrograms = await loadFromDB();
+        if (storedPrograms && storedPrograms.length > 0) { // Check for actual data
+          setPrograms(storedPrograms);
+          console.log("Programs loaded from IndexedDB.");
+        }
+      } catch (dbErr) {
+        console.warn("Gagal memuat program dari IndexedDB:", dbErr);
+      }
+
+      try {
+        const storedArticles = localStorage.getItem('sobat_umkm_kulwa');
+        if (storedArticles) {
+          const parsedArticles = JSON.parse(storedArticles);
+          if (parsedArticles.length > 0) { // Check for actual data
+            setArticles(parsedArticles);
+            console.log("Articles loaded from LocalStorage.");
+          }
+        }
+      } catch (lsErr) {
+        console.warn("Gagal memuat artikel dari LocalStorage:", lsErr);
+      }
+
+      // 2. Fetch from API to get the latest data
+      try {
+        const [resProg, resArt] = await Promise.all([
+          fetch('https://sobatumkmpro.com/api.php?action=get_programs'),
+          fetch('https://sobatumkmpro.com/api.php?action=get_articles')
+        ]);
+        const progs = await resProg.json();
+        const arts = await resArt.json(); // Assuming arts is also an array
+
+        if (Array.isArray(progs)) {
+          setPrograms(progs);
+          saveToDB(progs); // Save to IndexedDB after successful fetch
+        }
+        if (Array.isArray(arts)) {
+          setArticles(arts);
+          localStorage.setItem('sobat_umkm_kulwa', JSON.stringify(arts)); // Save to LocalStorage after successful fetch
+        }
+      } catch (apiErr) {
+        console.error("Gagal sinkronisasi data dari server. Menggunakan data lokal jika tersedia.", apiErr);
+      }
+      setIsDataLoaded(true); // Mark data as loaded regardless of API success, as local data might be used
     };
     init();
   }, []);
 
   useEffect(() => {
     // Simpan data ke IndexedDB setiap kali ada perubahan, 
-    // tapi hanya jika data awal sudah selesai dimuat agar tidak tertimpa default
+    // tapi hanya jika data awal sudah selesai dimuat agar tidak menimpa data lokal dengan default kosong
     if (isDataLoaded) {
       saveToDB(programs);
     }
@@ -123,7 +163,11 @@ function App() {
 
   // Simpan KULWA ke LocalStorage setiap ada perubahan
   useEffect(() => {
-    localStorage.setItem('sobat_umkm_kulwa', JSON.stringify(articles));
+    // Simpan KULWA ke LocalStorage setiap ada perubahan,
+    // tapi hanya jika data awal sudah selesai dimuat agar tidak menimpa data lokal dengan default kosong
+    if (isDataLoaded) {
+      localStorage.setItem('sobat_umkm_kulwa', JSON.stringify(articles));
+    }
   }, [articles]);
 
   const handleLogout = () => {
@@ -155,6 +199,7 @@ function App() {
       <Programs programs={programs} />
       <Services />
       <Team />
+      <Clients />
       <Testimonials />
       <FAQ />
       <Contact />

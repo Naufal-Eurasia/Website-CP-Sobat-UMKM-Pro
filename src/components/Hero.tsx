@@ -1,5 +1,5 @@
 import { ArrowRight, Play } from 'lucide-react';
-import heroImage from '../assets/p1.png';
+import heroImage from '../assets/cc.png';
 
 export default function Hero() {
   return (

@@ -80,8 +80,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-slate-200 text-center text-xs tracking-widest uppercase">
-          &copy; 2026 Sobat UMKM Pro. Indonesia&apos;s Leading UMKM Consultant.
+        <div className="pt-8 border-t border-slate-200 text-center text-xs tracking-widest uppercase flex flex-col items-center gap-2">
+          <p>&copy; 2026 Sobat UMKM Pro. Indonesia&apos;s Leading UMKM Consultant.</p>
+          <a 
+            href="#admin" 
+            onClick={(e) => handleClick(e, '#admin')}
+            className="text-slate-300 hover:text-slate-400 transition-colors lowercase font-normal"
+          >
+            admin login
+          </a>
         </div>
       </div>
     </footer>

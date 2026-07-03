@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { GraduationCap, FileBarChart,Users, Brain,BarChart3, Building2, X } from 'lucide-react'; 
+import React, { useState, useRef } from 'react';
+import { GraduationCap, FileBarChart, Users, Brain, Building2, X, ChevronLeft, ChevronRight } from 'lucide-react'; 
 import posterMentoring from '../assets/Poster Mentoring.png';
 import posterConsulting from '../assets/Poster Consulting UMKM.png';
 import posterTraining from '../assets/postrain.png';
@@ -18,56 +18,35 @@ const services: ServiceItem[] = [
   {
     icon: GraduationCap,
     title: 'Training UMKM Pro',
-    shortDesc: 'Program Inkubasi Bisnis, Business Road Map, Akademi Manajer, hingga penyusunan SOP & KPI.',
+    shortDesc: 'Inkubasi bisnis, roadmap, SOP, dan KPI.',
     posterImage: posterTraining,
     link: 'https://wa.me/6281358894404',
   },
   {
     icon: Users,
     title: 'Mentoring UMKM Pro',
-    shortDesc: 'Pendampingan bisnis mendalam (360° Review, BOS Check, BSE) secara kelompok maupun eksklusif.',
+    shortDesc: 'Pendampingan 360° bisnis dan BOS Check.',
     posterImage: posterMentoring,
     link: 'https://wa.me/6281358894404',
   },
   {
     icon: Brain,
     title: 'Consulting UMKM Pro',
-    shortDesc: 'Solusi legalitas, perpajakan, rekrutmen SDM Pro Player, hingga penataan organisasi usaha.',
+    shortDesc: 'Legalitas, perpajakan, SDM, dan organisasi.',
     posterImage: posterConsulting,
     link: 'https://wa.me/6281358894404',
   },
   {
     icon: FileBarChart,
     title: 'BOS Check - Business Operating System Check',
-    shortDesc: 'Strategi scaling bisnis dari skala lokal ke nasional dengan pendekatan bertahap dan terukur.',
+    shortDesc: 'Strategi scaling bisnis lokal ke nasional.',
     posterImage: posterBos,
     link: 'https://docs.google.com/forms/d/e/1FAIpQLSdrCFwj1XAc2Q1JIx8Wce3r5hyAxXZc-ism6sflDq0c8qKgNg/viewform?usp=header',
   },
   {
-    icon: BarChart3,
-    title: 'BMG - Business Mentoring Group',
-    shortDesc: 'Riset mendalam terhadap tren pasar dan perilaku konsumen untuk pengambilan keputusan yang tepat.',
-    link: 'https://wa.me/6281358894404',
-    desc: (
-      <div className="space-y-6">
-        <p className="text-slate-600 leading-relaxed">
-          Riset mendalam terhadap tren pasar dan perilaku konsumen untuk pengambilan keputusan yang tepat, menciptakan daya tarik (lead magnet) yang optimal guna mengonversi prospek menjadi pelanggan setia.
-        </p>
-        <a
-          href="https://wa.me/6281358894404"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-700 text-white font-bold rounded-xl hover:bg-blue-800 transition shadow-lg"
-        >
-          Daftar BMG Sekarang
-        </a>
-      </div>
-    ),
-  },
-  {
     icon: Building2,
     title: 'Program CRA University',
-    shortDesc: 'Workshop Super Team, MFM BRM 2.0, & Smart Family RoadMap.',
+    shortDesc: 'Workshop Super Team & Smart Family RoadMap.',
     desc: (
       <div className="space-y-6">
         <p className="text-slate-600 leading-relaxed">
@@ -103,6 +82,13 @@ const services: ServiceItem[] = [
 export default function Services() {
   // State untuk melacak data layanan apa yang sedang aktif di pop-up
   const [activeService, setActiveService] = useState<ServiceItem | null>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (!carouselRef.current) return;
+    const offset = carouselRef.current.clientWidth * 0.8;
+    carouselRef.current.scrollBy({ left: direction === 'left' ? -offset : offset, behavior: 'smooth' });
+  };
 
   return (
     <section id="services" className="py-24 bg-slate-50">
@@ -117,46 +103,70 @@ export default function Services() {
           <div className="w-24 h-1 bg-blue-700 mt-4 rounded-full" />
         </div>
 
-        {/* Grid Menu Utama */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {services.map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.title}
-                onClick={() => setActiveService(s)} // Tambahkan onClick di sini
-                className="group p-8 rounded-3xl bg-white hover:bg-blue-700 transition-all duration-500 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
-              >
-                <div>
-                  <div className="w-16 h-16 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-white/20 group-hover:text-white transition">
-                    <Icon className="w-8 h-8" />
+        {/* Carousel / Grid Menu Utama */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center md:hidden">
+            <button
+              type="button"
+              onClick={() => scrollCarousel('left')}
+              className="ml-2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-lg shadow-slate-200 hover:bg-white transition"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="absolute inset-y-0 right-0 flex items-center md:hidden">
+            <button
+              type="button"
+              onClick={() => scrollCarousel('right')}
+              className="mr-2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-lg shadow-slate-200 hover:bg-white transition"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div
+            ref={carouselRef}
+            className="flex md:grid md:grid-cols-3 gap-4 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory touch-pan-x px-4 md:px-0 -mx-4 md:mx-0 pb-6 md:pb-0"
+          >
+            {services.map((s) => {
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.title}
+                  onClick={() => setActiveService(s)} // Tambahkan onClick di sini
+                  className="min-w-[65vw] sm:min-w-[48vw] md:min-w-0 max-w-[300px] snap-center flex-shrink-0 group p-5 sm:p-6 rounded-3xl bg-white hover:bg-blue-700 transition-all duration-500 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col justify-between cursor-pointer"
+                >
+                  <div>
+                    <div className="w-14 h-14 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-white/20 group-hover:text-white transition">
+                      <Icon className="w-7 h-7" />
+                    </div>
+
+                    {s.posterImage && (
+                      <div className="hidden md:block mb-4 rounded-2xl overflow-hidden aspect-[3/4] border border-slate-100 bg-slate-50 shadow-sm group-hover:border-blue-500 transition-all">
+                        <img src={s.posterImage} alt={s.title} className="w-full h-full object-contain" loading="lazy" />
+                      </div>
+                    )}
+
+                    <h3 className="text-lg font-bold mb-2 group-hover:text-white transition">
+                      {s.title}
+                    </h3>
+                    <p className="text-slate-600 group-hover:text-blue-50 leading-relaxed transition text-sm line-clamp-2">
+                      {s.shortDesc}
+                    </p>
                   </div>
 
-                  {s.posterImage && (
-                    <div className="mb-6 rounded-2xl overflow-hidden aspect-[3/4] border border-slate-100 bg-slate-50 shadow-sm group-hover:border-blue-500 transition-all">
-                      <img src={s.posterImage} alt={s.title} className="w-full h-full object-contain" loading="lazy" />
-                    </div>
-                  )}
-
-                  <h3 className="text-2xl font-bold mb-4 group-hover:text-white transition">
-                    {s.title}
-                  </h3>
-                  <p className="text-slate-600 group-hover:text-blue-50 leading-relaxed transition text-sm">
-                    {s.shortDesc}
-                  </p>
+                  {/* Tombol Pemicu Pop-up */}
+                  <div className="mt-6 pt-4 border-t border-slate-100 group-hover:border-blue-600 transition">
+                    <button
+                      className="text-sm font-semibold text-blue-700 group-hover:text-white inline-flex items-center gap-1 hover:underline pointer-events-none" // pointer-events-none agar tidak double click
+                    >
+                      Lihat Detail Layanan &rarr;
+                    </button>
+                  </div>
                 </div>
-
-                {/* Tombol Pemicu Pop-up */}
-                <div className="mt-6 pt-4 border-t border-slate-100 group-hover:border-blue-600 transition">
-                  <button
-                    className="text-sm font-semibold text-blue-700 group-hover:text-white inline-flex items-center gap-1 hover:underline pointer-events-none" // pointer-events-none agar tidak double click
-                  >
-                    Lihat Detail Layanan &rarr;
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <div className="text-center mt-12">

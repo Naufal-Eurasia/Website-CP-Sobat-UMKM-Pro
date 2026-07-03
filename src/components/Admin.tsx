@@ -19,7 +19,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
   const [editingArticleId, setEditingArticleId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [viewDate, setViewDate] = useState(new Date()); // Mengikuti bulan saat ini secara otomatis
+  const [viewDate, setViewDate] = useState(new Date());
   
   const [eventData, setEventData] = useState({
     title: '',
@@ -29,6 +29,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
     poster: null as File | null
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [eventPosterCleared, setEventPosterCleared] = useState(false);
 
   // State untuk form Kulwa
   const [kulwaData, setKulwaData] = useState({
@@ -38,12 +39,13 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
     poster: null as File | null
   });
   const [kulwaPreviewUrl, setKulwaPreviewUrl] = useState<string | null>(null);
+  const [kulwaPosterCleared, setKulwaPosterCleared] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEventData({ ...eventData, [e.target.name]: e.target.value });
   };
 
-  // Fungsi Kompresi Gambar: Mengizinkan input gambar besar, tapi menyimpannya dalam ukuran kecil (web-friendly)
+  // Fungsi Kompresi Gambar: Support PNG dan JPG dengan kompresi optimal
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -53,11 +55,12 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1200; // Resolusi maksimal agar tetap tajam tapi ringan
-          const MAX_HEIGHT = 1200;
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1600; // Disesuaikan untuk portrait 3:4
           let width = img.width;
           let height = img.height;
 
+          // Mempertahankan aspek rasio
           if (width > height) {
             if (width > MAX_WIDTH) {
               height *= MAX_WIDTH / width;
@@ -73,8 +76,10 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          // Hasil akhir dikompresi ke format JPEG dengan kualitas 0.7 (70%)
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          
+          // Semua format: gunakan JPEG dengan quality 0.85 untuk ukuran optimal
+          // PNG lossless data URL terlalu besar (2-5MB), tidak cocok untuk storage
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
         };
         img.onerror = reject;
       };
@@ -100,7 +105,10 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
       ? events.find(ev => ev.id === editingEventId)?.poster 
       : undefined;
     
-    if (eventData.poster) {
+    // Jika poster dihapus user, set ke undefined
+    if (eventPosterCleared) {
+      posterUrl = undefined;
+    } else if (eventData.poster) {
       try {
         posterUrl = await compressImage(eventData.poster as File);
       } catch (error) {
@@ -110,30 +118,42 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
       }
     }
 
-    if (editingEventId !== null) {
-      setEvents(events.map(ev => 
-        ev.id === editingEventId 
-          ? { ...ev, title: eventData.title, date: eventData.date, link: eventData.link || undefined, type: eventData.type, poster: posterUrl }
-          : ev
-      ));
-      setNotification({ message: 'Program berhasil diperbarui!', type: 'success' });
-      setEditingEventId(null);
-    } else {
-      const newEvent = {
-        id: Date.now(),
-        title: eventData.title,
-        date: eventData.date,
-        link: eventData.link || undefined,
-        type: eventData.type,
-        poster: posterUrl
-      };
-      setEvents([...events, newEvent]);
-      setNotification({ message: 'Program berhasil ditambahkan!', type: 'success' });
-    }
+    const payload = {
+      id: editingEventId,
+      title: eventData.title,
+      date: eventData.date,
+      link: eventData.link,
+      type: eventData.type,
+      poster: posterUrl
+    };
 
-    setEventData({ title: '', link: '', date: '', type: 'Workshop', poster: null });
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    try {
+      const response = await fetch('https://sobatumkmpro.com/api.php?action=save_program', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        if (editingEventId) {
+          setEvents(events.map(ev => ev.id === editingEventId ? { ...payload, id: editingEventId } : ev));
+        } else {
+          setEvents([{ ...payload, id: result.id }, ...events]);
+        }
+        setNotification({ message: 'Data berhasil disimpan!', type: 'success' });
+        setEditingEventId(null);
+
+        setEventData({ title: '', link: '', date: '', type: 'Workshop', poster: null });
+        setPreviewUrl(null);
+        setEventPosterCleared(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } else {
+        setNotification({ message: `Gagal: ${result.message}`, type: 'error' });
+      }
+    } catch (err: any) {
+      setNotification({ message: 'Gagal koneksi ke API server.', type: 'error' });
+    }
   };
 
   const handleKulwaSubmit = async (e: React.FormEvent) => {
@@ -156,36 +176,46 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
         ? safeArticles.find(a => a.id === editingArticleId)?.poster 
         : undefined;
       
-      if (kulwaData.poster) {
+      // Jika poster dihapus user, set ke undefined
+      if (kulwaPosterCleared) {
+        posterUrl = undefined;
+      } else if (kulwaData.poster) {
         posterUrl = await compressImage(kulwaData.poster as File);
       }
 
-      if (editingArticleId !== null) {
-        const updated = safeArticles.map(a => 
-          a.id === editingArticleId 
-            ? { ...a, title: kulwaData.title, date: kulwaData.date, content: kulwaData.content, poster: posterUrl }
-            : a
-        );
-        setArticles(updated);
-        setNotification({ message: 'Artikel KULWA diperbarui!', type: 'success' });
-        setEditingArticleId(null);
-      } else {
-        const newArticle = {
-          id: Date.now(),
-          title: kulwaData.title,
-          date: kulwaData.date,
-          content: kulwaData.content,
-          poster: posterUrl
-        };
-        setArticles([...safeArticles, newArticle]);
-        setNotification({ message: 'Artikel KULWA ditambahkan!', type: 'success' });
-      }
+      const payload = {
+        id: editingArticleId,
+        title: kulwaData.title,
+        date: kulwaData.date,
+        content: kulwaData.content,
+        poster: posterUrl
+      };
 
-      // Reset Form
+      const response = await fetch('https://sobatumkmpro.com/api.php?action=save_article', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        if (editingArticleId) {
+          setArticles(safeArticles.map(a => a.id === editingArticleId ? { ...payload, id: editingArticleId } : a));
+        } else {
+          setArticles([{ ...payload, id: result.id }, ...safeArticles]);
+        }
+        setNotification({ message: 'KULWA berhasil disimpan!', type: 'success' });
+        setEditingArticleId(null);
+      }
+      else if (result.message) {
+        setNotification({ message: `Gagal menyimpan KULWA: ${result.message}`, type: 'error' });
+      } else {
+        setNotification({ message: 'Gagal menyimpan KULWA karena respons tidak terduga.', type: 'error' });
+      }
       setKulwaData({ title: '', date: '', content: '', poster: null });
       setKulwaPreviewUrl(null);
+      setKulwaPosterCleared(false);
       
-      // Bersihkan input file secara manual
       const fileInput = document.getElementById('kulwa-poster') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
@@ -207,6 +237,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
     setEditingEventId(ev.id);
     setEventData({ title: ev.title, link: ev.link || '', date: ev.date, type: ev.type, poster: null });
     setPreviewUrl(ev.poster || null);
+    setEventPosterCleared(false);
     setActiveTab('form');
   };
 
@@ -214,6 +245,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
     setEditingArticleId(article.id);
     setKulwaData({ title: article.title, date: article.date, content: article.content, poster: null });
     setKulwaPreviewUrl(article.poster || null);
+    setKulwaPosterCleared(false);
     setActiveTab('kulwa');
   };
 
@@ -222,18 +254,25 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
     setShowDeleteConfirm(id);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (showDeleteConfirm !== null) {
-      if (deleteType === 'event') {
-        setEvents(events.filter((ev) => ev.id !== showDeleteConfirm));
-        setNotification({ message: 'Program berhasil dihapus!', type: 'success' });
-      } else if (deleteType === 'kulwa') {
-        if (setArticles) {
-          setArticles((articles || []).filter((a) => a.id !== showDeleteConfirm));
-          setNotification({ message: 'Artikel KULWA berhasil dihapus!', type: 'success' });
+      const action = deleteType === 'event' ? 'delete_program' : 'delete_article';
+      try {
+        const response = await fetch(`https://sobatumkmpro.com/api.php?action=${action}&id=${showDeleteConfirm}`, {
+          method: 'DELETE'
+        });
+        const result = await response.json();
+        if (result.success) {
+          if (deleteType === 'event') setEvents(events.filter(ev => ev.id !== showDeleteConfirm));
+          else setArticles(articles.filter(a => a.id !== showDeleteConfirm));
+          setNotification({ message: 'Data berhasil dihapus!', type: 'success' });
+        } else if (result.message) {
+          setNotification({ message: `Gagal menghapus data: ${result.message}`, type: 'error' });
         } else {
-          setNotification({ message: 'Gagal menghapus: Sistem sinkronisasi data tidak terdeteksi.', type: 'error' });
+          setNotification({ message: 'Gagal menghapus data karena respons tidak terduga.', type: 'error' });
         }
+      } catch (err: any) {
+        setNotification({ message: 'Gagal menghapus data di server.', type: 'error' });
       }
       setShowDeleteConfirm(null);
     }
@@ -262,16 +301,12 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
 
       const dateLower = ev.date.toLowerCase();
       
-      // 1. Coba cek jika input adalah format standar YYYY-MM-DD
       const evDate = new Date(ev.date);
       if (!isNaN(evDate.getTime())) {
         return evDate.getFullYear() === year && evDate.getMonth() === month && evDate.getDate() === day;
       }
 
-      // 2. Jika input adalah teks bebas (misal: "3-4 Mei 2026")
-      // Kita cek apakah teks mengandung nama bulan yang sedang dilihat dan tahunnya
       if (dateLower.includes(monthNameInIndonesian) && dateLower.includes(year.toString())) {
-        // Gunakan Regex untuk mencari angka hari yang berdiri sendiri (bukan bagian dari 13, 23, dll)
         const dayRegex = new RegExp(`\\b${day}\\b`);
         return dayRegex.test(dateLower);
       }
@@ -401,18 +436,43 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                         onChange={handleFileChange}
                       />
                       {previewUrl ? (
-                        <div className="relative group">
-                          <img src={previewUrl} alt="Preview" className="h-48 w-auto rounded-lg shadow-md mb-2 object-contain bg-slate-100" />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg">
-                            <p className="text-white text-xs font-bold">Ganti Gambar</p>
+                        <div className="relative group w-full flex flex-col items-center max-w-[420px]">
+                          <div className="relative w-full overflow-hidden rounded-lg shadow-md bg-slate-100 min-h-[260px] max-h-[420px]">
+                            <img 
+                              src={previewUrl} 
+                              alt="Preview" 
+                              className="w-full h-auto max-h-[420px] object-contain"
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg flex-col gap-2">
+                              <p className="text-white text-xs font-bold">Klik untuk Ganti Gambar</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewUrl(null);
+                                setEventData({ ...eventData, poster: null });
+                                setEventPosterCleared(true);
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                              }}
+                              className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-lg opacity-0 group-hover:opacity-100"
+                              title="Hapus poster"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
+                          <p className="text-sm text-slate-500 font-medium mt-2">
+                            {eventData.poster ? `File: ${eventData.poster.name}` : 'Poster Terpasang (Klik untuk ganti)'}
+                          </p>
                         </div>
                       ) : (
-                        <ImageIcon className="w-10 h-10 text-slate-400 mb-2" />
+                        <>
+                          <ImageIcon className="w-10 h-10 text-slate-400 mb-2" />
+                          <p className="text-sm text-slate-500 font-medium">
+                            Klik untuk pilih gambar poster
+                          </p>
+                          <p className="text-xs text-slate-400 mt-1">Rekomendasi rasio 3:4 (Portrait)</p>
+                        </>
                       )}
-                      <p className="text-sm text-slate-500 font-medium">
-                        {eventData.poster ? `File: ${eventData.poster.name}` : previewUrl ? 'Poster Terpasang (Klik untuk ganti)' : 'Klik untuk pilih gambar poster'}
-                      </p>
                     </label>
                   </div>
 
@@ -424,6 +484,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                           setEditingEventId(null);
                           setEventData({ title: '', link: '', date: '', type: 'Workshop', poster: null });
                           setPreviewUrl(null);
+                          setEventPosterCleared(false);
                         }}
                         className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition"
                       >
@@ -481,10 +542,13 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                       <ImageIcon className="w-4 h-4" /> Poster Materi
                     </label>
                     <label 
-                      className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50 flex flex-col items-center justify-center ${kulwaPreviewUrl ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 hover:border-blue-400'}`}
+                      className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer bg-slate-50 flex flex-col items-center justify-center min-h-[220px] ${kulwaPreviewUrl ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 hover:border-blue-400'}`}
                     >
                       <input 
-                        type="file" className="hidden" accept="image/*" 
+                        type="file" 
+                        id="kulwa-poster"
+                        className="hidden" 
+                        accept="image/*" 
                         onChange={(e) => {
                           if (e.target.files?.[0]) {
                             setKulwaData({...kulwaData, poster: e.target.files[0]});
@@ -493,11 +557,37 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                         }}
                       />
                       {kulwaPreviewUrl ? (
-                        <img src={kulwaPreviewUrl} alt="Preview" className="h-40 rounded-lg shadow-md mb-2" />
+                        <div className="relative group w-full max-w-[360px] overflow-hidden rounded-lg shadow-md bg-slate-100 min-h-[260px] max-h-[420px]">
+                          <img 
+                            src={kulwaPreviewUrl} 
+                            alt="Preview" 
+                            className="w-full h-auto max-h-[420px] object-contain"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-lg flex-col gap-2">
+                            <p className="text-white text-xs font-bold">Klik untuk Ganti</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKulwaPreviewUrl(null);
+                              setKulwaData({ ...kulwaData, poster: null });
+                              setKulwaPosterCleared(true);
+                              const fileInput = document.getElementById('kulwa-poster') as HTMLInputElement;
+                              if (fileInput) fileInput.value = '';
+                            }}
+                            className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-lg opacity-0 group-hover:opacity-100"
+                            title="Hapus poster"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       ) : (
-                        <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
+                        <>
+                          <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
+                          <p className="text-xs text-slate-500">Klik untuk upload poster KULWA</p>
+                          <p className="text-[10px] text-slate-400 mt-1">Rekomendasi rasio 3:4 (Portrait)</p>
+                        </>
                       )}
-                      <p className="text-xs text-slate-500">Klik untuk upload poster KULWA</p>
                     </label>
                   </div>
 
@@ -509,6 +599,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                           setEditingArticleId(null);
                           setKulwaData({ title: '', date: '', content: '', poster: null });
                           setKulwaPreviewUrl(null);
+                          setKulwaPosterCleared(false);
                         }}
                         className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition"
                       >
@@ -540,17 +631,14 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                     <div key={d} className="text-center text-xs font-bold text-slate-400 py-2">{d}</div>
                   ))}
                   
-                  {/* Baris Kosong untuk awal bulan */}
                   {Array.from({ length: startDayOfMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => (
                     <div key={`empty-${i}`} className="h-24 p-2"></div>
                   ))}
 
-                  {/* Tanggal Aktif */}
                   {Array.from({ length: daysInMonth(viewDate.getFullYear(), viewDate.getMonth()) }).map((_, i) => {
                     const day = i + 1;
                     const dayEvents = getEventsForDay(day);
                     
-                    // Sekarang menggunakan waktu asli dari komputer Anda
                     const now = new Date();
                     const isToday = 
                       day === now.getDate() && 
@@ -602,8 +690,20 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                       </div>
                       <h4 className="font-bold text-sm leading-tight">{a.title}</h4>
                       <p className="text-[10px] text-slate-400 mt-2 line-clamp-2">{a.content}</p>
+                      {a.poster && (
+                        <div className="mt-3 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-2">
+                          <img 
+                            src={a.poster} 
+                            alt={a.title} 
+                            className="w-full h-auto max-h-32 object-contain"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {(!articles || articles.length === 0) && (
+                    <p className="text-slate-400 text-sm text-center py-8">Belum ada materi KULWA</p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -640,12 +740,19 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
                       {ev.date}
                     </p>
                     {ev.poster && (
-                      <div className="mt-2 rounded-lg overflow-hidden h-24 border border-white/10 bg-white/5">
-                        <img src={ev.poster} alt="Preview" className="w-full h-full object-contain" />
+                      <div className="mt-3 rounded-lg overflow-hidden border border-white/10 bg-white/5 p-2">
+                        <img 
+                          src={ev.poster} 
+                          alt={ev.title} 
+                          className="w-full h-auto max-h-32 object-contain"
+                        />
                       </div>
                     )}
                   </div>
                 ))}
+                {events.length === 0 && (
+                  <p className="text-slate-400 text-sm text-center py-8">Belum ada acara terdaftar</p>
+                )}
               </div>
             </div>
             )}
@@ -653,7 +760,7 @@ export default function Admin({ onLogout, events, setEvents, articles, setArticl
             <div className="bg-blue-50 rounded-[2.5rem] p-8 border border-blue-100">
               <h3 className="font-bold text-blue-800 mb-2">Tips Admin</h3>
               <p className="text-sm text-blue-600 leading-relaxed">
-                Gunakan aspek rasio 1:1 atau 16:9 untuk hasil tampilan poster terbaik di halaman depan.
+                Gunakan aspek rasio 3:4 (portrait) untuk hasil tampilan poster terbaik di halaman depan.
               </p>
             </div>
           </div>

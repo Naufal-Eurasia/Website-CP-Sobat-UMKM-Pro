@@ -41,8 +41,10 @@ const galleryPhotos = [
 
 export default function Testimonials() {
   const galleryRef = useRef<HTMLDivElement>(null);
+  const testimonialRef = useRef<HTMLDivElement>(null);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   // Menangani scroll lock saat gambar di-zoom
   useEffect(() => {
@@ -64,6 +66,25 @@ export default function Testimonials() {
     };
   }, [zoomImage]);
 
+  // Auto-scroll testimonials
+  useEffect(() => {
+    if (!autoScroll || !testimonialRef.current) return;
+
+    const interval = setInterval(() => {
+      if (testimonialRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = testimonialRef.current;
+        const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 10;
+        
+        testimonialRef.current.scrollBy({
+          left: isAtEnd ? -scrollWidth : clientWidth * 0.7,
+          behavior: 'smooth',
+        });
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [autoScroll]);
+
   const handleCloseZoom = () => {
     setZoomImage(null);
     setScale(1);
@@ -74,10 +95,18 @@ export default function Testimonials() {
     setScale(prev => (prev === 1 ? 1.5 : 1));
   };
 
+  const scrollTestimonials = (direction: 'left' | 'right') => {
+    if (!testimonialRef.current) return;
+    const offset = testimonialRef.current.clientWidth * 0.7;
+    testimonialRef.current.scrollBy({ left: direction === 'left' ? -offset : offset, behavior: 'smooth' });
+    setAutoScroll(false);
+    setTimeout(() => setAutoScroll(true), 5000);
+  };
+
   const scrollGallery = (direction: 'left' | 'right') => {
     if (galleryRef.current) {
       const { scrollLeft, clientWidth } = galleryRef.current;
-      const scrollAmount = clientWidth * 0.8; // Geser 80% dari lebar layar
+      const scrollAmount = clientWidth * 0.8;
       const scrollTo = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
       galleryRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
@@ -100,37 +129,58 @@ export default function Testimonials() {
           <div className="w-24 h-1 bg-blue-500 mt-4 rounded-full" />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((t) => (
-            <div
-              key={t.name}
-              className="bg-white/5 backdrop-blur-md p-8 rounded-3xl shadow-sm hover:shadow-2xl hover:bg-white/10 transition duration-500 border border-white/10 relative group"
-            >
-              <Quote className="w-10 h-10 text-amber-400/10 absolute top-6 right-6 group-hover:text-amber-400/20 transition-colors" />
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 text-amber-400 fill-amber-400"
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => scrollTestimonials('left')}
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-4 md:-translate-x-0 inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div
+            ref={testimonialRef}
+            className="flex gap-8 overflow-x-auto overflow-y-hidden px-4 md:px-0 pb-4 snap-x snap-mandatory scroll-smooth hide-scrollbar"
+          >
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="min-w-[300px] sm:min-w-[350px] md:min-w-[400px] bg-white/5 backdrop-blur-md p-8 rounded-3xl shadow-sm hover:shadow-2xl hover:bg-white/10 transition duration-500 border border-white/10 relative group snap-start flex flex-col"
+              >
+                <Quote className="w-10 h-10 text-amber-400/10 absolute top-6 right-6 group-hover:text-amber-400/20 transition-colors" />
+                <div className="flex gap-1 mb-4">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-amber-400 fill-amber-400"
+                    />
+                  ))}
+                </div>
+                <p className="text-blue-100/90 leading-relaxed mb-6 italic flex-1">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={t.img}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-blue-400/30"
                   />
-                ))}
-              </div>
-              <p className="text-blue-100/90 leading-relaxed mb-6 italic">
-                &ldquo;{t.text}&rdquo;
-              </p>
-              <div className="flex items-center gap-4">
-                <img
-                  src={t.img}
-                  alt={t.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-blue-400/30"
-                />
-                <div>
-                  <h4 className="font-bold text-white">{t.name}</h4>
-                  <p className="text-sm text-blue-300">{t.role}</p>
+                  <div>
+                    <h4 className="font-bold text-white">{t.name}</h4>
+                    <p className="text-sm text-blue-300">{t.role}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => scrollTestimonials('right')}
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-4 md:translate-x-0 inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Bagian Galeri Kegiatan Baru */}

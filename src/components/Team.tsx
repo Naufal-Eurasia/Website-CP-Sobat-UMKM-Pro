@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { X, Instagram, Facebook, Linkedin, Youtube } from 'lucide-react';
-import teamTogether from '../assets/bersama.jpg';
+import { useState, useEffect, useRef } from 'react';
+import { X, Instagram, Facebook, Linkedin, Youtube, ChevronLeft, ChevronRight } from 'lucide-react';
 import ar1Image from '../assets/AR1.jpeg';
 import ar2Image from '../assets/AR2.png';
-import dtImage from '../assets/dt.jpeg';
 import ar5Image from '../assets/AR5.png';
 import ar6Image from '../assets/ar6.jpg';
 import hrImage from '../assets/hr.png';
@@ -92,22 +90,6 @@ const members: Member[] = [
     img: hrImage,
   },
   {
-    name: 'Radita Nurdianti, S.Psi',
-    role: 'SDM & Administrasi Talenta',
-    mainRole: 'Mendukung pengelolaan sumber daya manusia secara menyeluruh mulai dari administrasi SDM, pengembangan karyawan, hubungan kerja, hingga implementasi kebijakan perusahaan yang mendukung pertumbuhan organisasi.',
-    shortDesc: 'Praktisi Human Resource yang memiliki pemahaman dalam pengelolaan SDM, administrasi kepegawaian, pengembangan kompetensi, serta penciptaan lingkungan kerja yang produktif dan kolaboratif.',
-    experience: [
-      'Human Resource Administration',
-      'Employee Relations',
-      'Performance Management Support',
-      'Recruitment Support',
-      'Human Capital Development',
-      'Organizational Culture Implementation'
-    ],
-    desc: 'Human resource bukan sekadar tentang mengelola data, tapi tentang menghargai potensi dan membangun budaya di mana setiap individu bisa bertumbuh bersama organisasi.',
-    img: dtImage,
-  },
-  {
     name: 'Nur Hidayati, S.Si',
     role: 'Pengembangan SDM & Talenta',
     mainRole: 'Membangun tim yang kompeten, produktif, dan memiliki semangat belajar untuk mendukung pertumbuhan Sobat UMKM Pro.',
@@ -126,6 +108,17 @@ const members: Member[] = [
 
 export default function Team() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      // Geser sekitar 80% dari lebar container agar user tahu ada elemen berikutnya
+      const scrollAmount = clientWidth * 0.8;
+      const scrollTo = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     if (selectedMember) {
@@ -156,63 +149,84 @@ export default function Team() {
           <div className="w-24 h-1 bg-blue-700 mt-4 rounded-full" />
         </div>
 
-        <div className="mb-20">
-          <div className="relative group overflow-hidden rounded-3xl shadow-xl h-[420px] sm:h-[450px] md:h-[500px]">
-            <img
-              src={teamTogether}
-              alt="Tim Bersama"
-              className="w-full h-full object-cover object-[center_20%] transition duration-700 group-hover:scale-105"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-12">
-          {/* Row Atas: Founder & Digital Marketing (2 Orang) */}
-          <div className="flex flex-wrap justify-center gap-8">
-            {members.slice(0, 2).map((m) => (
+        <div className="flex flex-col gap-16">
+          {/* Section Founder & Core Team (Atas) */}
+          <div className="flex flex-wrap justify-center items-stretch gap-8">
+            {members.slice(0, 2).map((m, index) => (
               <div
                 key={m.name}
                 onClick={() => setSelectedMember(m)}
-                className="bg-slate-50 p-8 rounded-[2.5rem] text-center hover:shadow-xl transition duration-500 group border border-slate-100 cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-80"
+                className={`bg-slate-50 p-10 rounded-[3rem] text-center hover:shadow-2xl transition duration-500 group border border-slate-100 cursor-pointer w-full max-w-md flex flex-col ${index === 1 ? 'hidden lg:block' : ''}`}
               >
-                <div className="w-40 h-40 mx-auto mb-6 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:border-amber-400 transition duration-500">
+                <div className="w-48 h-48 mx-auto mb-8 rounded-full overflow-hidden border-8 border-white shadow-xl group-hover:border-amber-400 transition duration-500 flex-shrink-0">
                   <img
                     src={m.img}
                     alt={m.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-1">{m.name}</h3>
-                <p className="text-blue-700 font-bold text-sm uppercase tracking-widest mb-3">
-                  {m.role}
-                </p>
-                <p className="text-slate-500 leading-relaxed text-sm">Klik untuk detail →</p>
+                <div className="flex flex-col flex-grow justify-between items-center">
+                  <div className="mb-6">
+                    <h3 className="text-3xl font-bold text-slate-900 mb-2">{m.name}</h3>
+                    <p className="text-blue-700 font-bold text-base uppercase tracking-widest">
+                      {m.role}
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-6 py-2 bg-blue-700 text-white rounded-full text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    Lihat Profil Lengkap
+                  </div>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Row Bawah: Tim Pendukung Lainnya */}
-          <div className="flex flex-wrap justify-center gap-8">
-            {members.slice(2).map((m) => (
-              <div
-                key={m.name}
-                onClick={() => setSelectedMember(m)}
-                className="bg-slate-50 p-8 rounded-[2rem] text-center hover:shadow-xl transition duration-500 group border border-slate-100 cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-72"
-              >
-                <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:border-amber-400 transition duration-500">
-                  <img
-                    src={m.img}
-                    alt={m.name}
-                    className="w-full h-full object-cover"
-                  />
+          {/* Section Anggota Lainnya (Slider) */}
+          <div className="relative group/slider">
+            {/* Tombol Navigasi Slider */}
+            <button 
+              onClick={() => scroll('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-6 z-10 p-3 bg-white shadow-xl rounded-full text-blue-700 hover:bg-blue-700 hover:text-white transition-all border border-slate-100 lg:hidden"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <div 
+              ref={scrollRef}
+              className="flex gap-6 overflow-x-auto lg:overflow-x-hidden snap-x snap-mandatory scrollbar-hide pb-8 px-4 lg:justify-center"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {members.slice(1).map((m, index) => (
+                <div
+                  key={m.name}
+                  onClick={() => setSelectedMember(m)}
+                  className={`min-w-[280px] md:min-w-[320px] bg-slate-50 p-8 rounded-[2.5rem] text-center hover:shadow-xl transition duration-500 group border border-slate-100 cursor-pointer snap-start flex flex-col ${index === 0 ? 'lg:hidden' : ''}`}
+                >
+                  <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:border-amber-400 transition duration-500 flex-shrink-0">
+                    <img
+                      src={m.img}
+                      alt={m.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col flex-grow justify-between">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold text-slate-900 mb-1">{m.name}</h3>
+                      <p className="text-blue-700 font-bold text-xs uppercase tracking-widest">
+                        {m.role}
+                      </p>
+                    </div>
+                    <p className="text-slate-500 leading-relaxed text-xs">Klik untuk detail →</p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">{m.name}</h3>
-                <p className="text-blue-700 font-bold text-xs uppercase tracking-widest mb-3">
-                  {m.role}
-                </p>
-                <p className="text-slate-500 leading-relaxed text-sm">Klik untuk detail →</p>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <button 
+              onClick={() => scroll('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-6 z-10 p-3 bg-white shadow-xl rounded-full text-blue-700 hover:bg-blue-700 hover:text-white transition-all border border-slate-100 lg:hidden"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </div>
@@ -284,7 +298,7 @@ export default function Team() {
                     &ldquo;{selectedMember.desc}&rdquo;
                   </p>
                   
-                  <div className="flex justify-center md:justify-start gap-4">
+                  <div className="flex flex-wrap justify-center md:justify-start gap-3 md:gap-4">
                     {selectedMember.socials?.instagram && (
                       <a href={selectedMember.socials.instagram} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-amber-400 hover:text-white transition-all">
                         <Instagram className="w-6 h-6" />

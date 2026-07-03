@@ -23,6 +23,7 @@ export default function Navbar() {
     e.preventDefault();
     if (href === '#admin') {
       window.location.hash = '#admin';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
     } else {
       const el = document.querySelector(href);
       if (el) {

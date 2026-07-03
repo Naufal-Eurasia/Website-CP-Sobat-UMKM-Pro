@@ -44,54 +44,59 @@ export default function Articles({ articles }: ArticlesProps) {
           {!articles || articles.length === 0 ? (
             <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
               <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium">Belum ada materi KULWA yang diposting.</p>
-              <p className="text-slate-400 text-sm mt-1">Silakan tambahkan melalui Panel Admin.</p>
+              <p className="text-slate-500 font-medium">Belum ada materi KULWA yang tersedia</p>
             </div>
           ) : (
             articles.map((article) => (
-            <div 
-              key={article.id}
-              className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col group cursor-pointer"
-              onClick={() => setSelectedArticle(article)}
-            >
-              {article.poster ? (
-                <div className="h-52 overflow-hidden bg-slate-200">
-                  <img 
-                    src={article.poster} 
-                    alt={article.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-              ) : (
-                <div className="h-52 bg-blue-700 flex items-center justify-center">
-                  <BookOpen className="w-16 h-16 text-white/20" />
-                </div>
-              )}
-              
-              <div className="p-8 flex flex-col flex-grow">
-                <div className="flex items-center gap-4 text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">
-                  <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {article.date}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 5 Menit Baca</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-blue-700 transition">
-                  {article.title}
-                </h3>
-                <p className="text-slate-500 text-sm line-clamp-3 mb-6 leading-relaxed">
-                  {article.content.substring(0, 150)}...
-                </p>
-                <div className="mt-auto flex items-center text-blue-700 font-bold text-sm">
-                  Baca Selengkapnya <ChevronRight className="w-4 h-4 ml-1 group-hover:ml-2 transition-all" />
+              <div 
+                key={article.id}
+                className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col group cursor-pointer"
+                onClick={() => setSelectedArticle(article)}
+              >
+                {article.poster ? (
+                <div className="w-full aspect-[3/4] overflow-hidden bg-slate-900/5 relative rounded-t-[2.5rem]">
+                    <img 
+                      src={article.poster} 
+                      alt={article.title} 
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full aspect-[3/4] bg-blue-700 flex items-center justify-center rounded-t-[2.5rem]">
+                    <BookOpen className="w-16 h-16 text-white/20" />
+                  </div>
+                )}
+                
+                <div className="p-8 flex flex-col flex-grow">
+                  <div className="flex items-center gap-4 text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> 
+                      {isNaN(Date.parse(article.date)) 
+                        ? article.date 
+                        : new Date(article.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 5 Menit Baca</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-blue-700 transition line-clamp-2">
+                    {article.title}
+                  </h3>
+                  <p className="text-slate-500 text-sm line-clamp-3 mb-6 leading-relaxed">
+                    {article.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                  </p>
+                  <div className="mt-auto flex items-center text-blue-700 font-bold text-sm">
+                    Baca Selengkapnya <ChevronRight className="w-4 h-4 ml-1 group-hover:ml-2 transition-all" />
+                  </div>
                 </div>
               </div>
-            </div>
-          )))}
+            ))
+          )}
         </div>
       </div>
 
       {/* Modal Detail Artikel */}
       {selectedArticle && (
         <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md transition-all"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md transition-all animate-fade-in"
           onClick={() => setSelectedArticle(null)}
         >
           <div 
@@ -107,18 +112,23 @@ export default function Articles({ articles }: ArticlesProps) {
 
             <div className="overflow-y-auto">
               {selectedArticle.poster && (
-                <div className="w-full h-64 md:h-96 bg-slate-200">
+                <div className="w-full aspect-[3/4] md:max-h-[70vh] bg-slate-100 relative mx-auto rounded-t-[3rem]">
                   <img 
                     src={selectedArticle.poster} 
                     alt={selectedArticle.title} 
-                    className="w-full h-full object-contain bg-slate-100"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               )}
 
               <div className="p-8 md:p-16">
                 <div className="flex items-center gap-4 text-xs font-bold text-blue-600 uppercase tracking-widest mb-6">
-                  <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {selectedArticle.date}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" /> 
+                    {isNaN(Date.parse(selectedArticle.date)) 
+                      ? selectedArticle.date 
+                      : new Date(selectedArticle.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
                   <span className="px-3 py-1 bg-blue-50 rounded-full">KULWA Series</span>
                 </div>
                 

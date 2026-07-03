@@ -71,17 +71,17 @@ export default function Contact() {
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           <div>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-8 leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-8 leading-tight">
               Mulai Konsultasi Bisnis Hari Ini!
             </h2>
-            <p className="text-blue-100/80 text-lg mb-12 max-w-lg leading-relaxed">
+            <p className="text-blue-100/80 text-base md:text-lg mb-12 max-w-lg leading-relaxed">
               Konsultasikan kebutuhan bisnis Anda dan dapatkan penawaran strategi
               terbaik dari tim ahli Sobat UMKM Pro.
             </p>
 
             <div className="space-y-6">
-              <div className="flex items-center gap-5 p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
-                <div className="w-14 h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="flex items-center gap-4 md:gap-5 p-5 md:p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
@@ -90,15 +90,15 @@ export default function Contact() {
                   </p>
                   <a 
                     href="mailto:sobat.umkmpro@gmail.com"
-                    className="text-xl font-semibold hover:text-amber-400 active:text-amber-600 transition block"
+                    className="text-lg sm:text-xl font-semibold hover:text-amber-400 active:text-amber-600 transition block break-all"
                   >
                     sobat.umkmpro@gmail.com
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
-                <div className="w-14 h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="flex items-center gap-4 md:gap-5 p-5 md:p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
@@ -109,15 +109,15 @@ export default function Contact() {
                     href="https://wa.me/6281259823825"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xl font-semibold hover:text-amber-400 active:text-amber-600 transition block"
+                    className="text-lg sm:text-xl font-semibold hover:text-amber-400 active:text-amber-600 transition block"
                   >
                     +62 812-5982-3825
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
-                <div className="w-14 h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="flex items-center gap-4 md:gap-5 p-5 md:p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-700 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
                   <svg viewBox="0 0 24 24" className="w-8 h-8">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335" />
                     <circle cx="12" cy="9" r="2.5" fill="#FFFFFF" />
@@ -145,7 +145,7 @@ export default function Contact() {
             </div>
           </div>
 
-          <div className="bg-white p-10 rounded-[3rem] shadow-2xl text-slate-800">
+          <div className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl text-slate-800">
             <h3 className="text-2xl font-bold mb-2 text-center">Hubungi Kami</h3>
             <p className="text-slate-500 text-center mb-8">
               Isi formulir di bawah untuk memulai chat konsultasi langsung dengan WhatsApp Admin kami.
